@@ -23,7 +23,6 @@ public class Grapher extends JFrame{
 	double firstDataTime = 0;
 	LinkedBlockingDeque<double[]> samples = new LinkedBlockingDeque<double[]>();
 	
-	
 	public Grapher() {
 		pane = new Pane();
 		JPanel paneHolder = new JPanel();
@@ -62,15 +61,16 @@ public class Grapher extends JFrame{
 //			for (int j = 0 ; j < 20; j++) 
 //				g.drawLine(0, 62*j, 1900, 62*j);
 			
+			
+			double largestTime = samples.getLast()[19];
+			
 			//Print data lines
-			double elapsedTime = getElapsedTimeInSeconds();
 			Iterator<double[]> it = samples.iterator();
 			double[] sample = it.next();
 			while (it.hasNext()) {
 				double[] nextSample = it.next();
-				
-				int x1 = (int)(1850 - ((elapsedTime + firstDataTime - sample[19])*128));
-				int x2 = (int)(1850 - ((elapsedTime + firstDataTime - nextSample[19])*128));
+				int x1 = 1850 - (int)((largestTime - sample[19])*128);
+				int x2 = 1850 - (int)((largestTime - nextSample[19])*128);
 				g.setColor(Color.black);
 				g.drawLine(x1, (int)(62*1.5-sample[3]/70), x2, (int)(62*1.5-nextSample[3]/70));
 				g.setColor(Color.red);
@@ -131,15 +131,20 @@ public class Grapher extends JFrame{
 				for (int i = 0; i < samp.size(); i++) 
 					samples.addLast(samp.get(i));
 				
-				//remove samples that are older than 13 seconds (off the screen)
+				//remove samples that are older than 15 seconds (off the screen)
 				while (!samples.isEmpty()) {
-					if (samples.getFirst()[19] + 13 < getElapsedTimeInSeconds()) 
+					if (samples.getFirst()[19] + 15 < getElapsedTimeInSeconds()) 
 						samples.removeFirst();
 					else
 						break;
 				}
 				
 				repaint();
+			}
+			try {
+				Thread.sleep(1);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 	}
