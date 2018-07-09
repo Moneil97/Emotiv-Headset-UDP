@@ -11,50 +11,83 @@ import java.util.Arrays;
 import java.util.List;
 
 public class SendEEGOverUDP {
+	
+	private EmotivController ec;
+	private DatagramSocket clientSocket;
+	private Thread t;
+	private InetAddress ip;
+	private int port;
 
-	@SuppressWarnings("resource")
-	public SendEEGOverUDP() throws SocketException, UnknownHostException {
+	public SendEEGOverUDP(String ip, int port) throws UnknownHostException {
+		ec = new EmotivController();
+		this.ip = InetAddress.getByName(ip);
+		this.port = port;
+	}
+	
+	public void start() throws SocketException {
 		
-		int port = 9092;
-		String ip = "localhost";
-		
-		EmotivController ec = new EmotivController();
-		DatagramSocket clientSocket = new DatagramSocket();
-		InetAddress IPAddress = InetAddress.getByName(ip);
-		
-		while (true) {
+		clientSocket = new DatagramSocket();
+		t = new Thread(new Runnable() {
 			
-			List<double[]> samples = ec.getAvailableSamples();
-			
-			if (samples != null) {
-				for (int s = 0; s < samples.size();  s++) {
+			@Override
+			public void run() {
+				
+				boolean ignoreFirstSamples = true; //Used to clear out buffer of old samples if stopped then continued
+				
+				while (true) {
 					
-					double[] sample = samples.get(s);
-					byte[] sendData = new byte[8*sample.length];
+					List<double[]> samples = ec.getAvailableSamples();
 					
-					//System.out.println(Arrays.toString(sample));
-					
-					for (int i = 0; i < sample.length; i++) {
-						byte[] d = toByteArray(sample[i]);
+					if (samples != null) {
 						
-						for (int j=0; j<8; j++) {
-							sendData[i*8 + j] = d[j];
-							//System.out.println("setting sendData[" + (i*8 + j) + "] to " + d[j]);
+						if (ignoreFirstSamples) {
+							ignoreFirstSamples = false;
+							continue;
+						}
+						
+						System.out.println(samples.size() + " samples");
+						for (int s = 0; s < samples.size();  s++) {
+							
+							double[] sample = samples.get(s);
+							byte[] sendData = new byte[8*sample.length];
+							
+							//System.out.println(Arrays.toString(sample));
+							
+							for (int i = 0; i < sample.length; i++) {
+								byte[] d = toByteArray(sample[i]);
+								
+								for (int j=0; j<8; j++) {
+									sendData[i*8 + j] = d[j];
+									//System.out.println("setting sendData[" + (i*8 + j) + "] to " + d[j]);
+								}
+							}
+							
+							//System.out.println(Arrays.toString(sendData) + "\n");
+							
+							DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, ip, port);
+							try {
+								clientSocket.send(sendPacket);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+							
 						}
 					}
 					
-					//System.out.println(Arrays.toString(sendData) + "\n");
-					
-					DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-					try {
-						clientSocket.send(sendPacket);
-					} catch (IOException e) {
-						e.printStackTrace();
+					if (t.isInterrupted()) {
+						clientSocket.close();
+						break;
 					}
 					
 				}
 			}
-		}
+		});
+		
+		t.start();
+	}
+	
+	public void stop() {
+		t.interrupt();
 	}
 	
 	private static byte[] toByteArray(double value) {
@@ -65,10 +98,9 @@ public class SendEEGOverUDP {
 
 	public static void main(String[] args) {
 		try {
-			new SendEEGOverUDP();
+			new SendEEGOverUDP("localhost", 9092).start();
 		} catch (SocketException | UnknownHostException e) {
 			e.printStackTrace();
 		}
 	}
-
 }
