@@ -13,8 +13,13 @@ import javax.swing.JLabel;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.swing.JPasswordField;
 import javax.swing.JCheckBox;
@@ -32,11 +37,15 @@ public class EEG_UDP_GUI extends JFrame {
 	private JPasswordField passwordInput;
 	private JTextField ipAddressInput;
 	private SendEEGOverUDP eeg;
+	private JTextField txthz;
+	
+	private String userName, password;
 
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
+					System.loadLibrary("edk");
 					EEG_UDP_GUI frame = new EEG_UDP_GUI();
 					frame.setVisible(true);
 				} catch (Exception e) {
@@ -75,6 +84,18 @@ public class EEG_UDP_GUI extends JFrame {
 		
 		JLabel lblSystemMessages = new JLabel("System Messages:");
 		centerPanel.add(lblSystemMessages, BorderLayout.NORTH);
+		
+		JPanel panel = new JPanel();
+		centerPanel.add(panel, BorderLayout.SOUTH);
+		
+		JLabel lblAverageSampleTime = new JLabel("Average Sample Time:");
+		panel.add(lblAverageSampleTime);
+		
+		txthz = new JTextField();
+		txthz.setEditable(false);
+		txthz.setText("0Hz");
+		panel.add(txthz);
+		txthz.setColumns(10);
 		
 		JPanel northPanel = new JPanel();
 		contentPane.add(northPanel, BorderLayout.NORTH);
@@ -127,6 +148,7 @@ public class EEG_UDP_GUI extends JFrame {
 		northPanel.add(panel_4);
 		
 		JCheckBox saveLoginCheckBox = new JCheckBox("Save Login");
+		saveLoginCheckBox.setToolTipText("WARNING: username and password will not be encrypted");
 		panel_4.add(saveLoginCheckBox);
 		
 		JCheckBox skipLoginCheckBox = new JCheckBox("Skip Login");
@@ -141,6 +163,13 @@ public class EEG_UDP_GUI extends JFrame {
 		panel_4.add(skipLoginCheckBox);
 		
 		JButton deleteSavedLoginButton = new JButton("Delete Saved Login");
+		deleteSavedLoginButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (new File("EmotivLogin").exists())
+					new File("EmotivLogin").delete();
+			}
+		});
 		panel_4.add(deleteSavedLoginButton);
 		
 		JPanel panel_6 = new JPanel();
@@ -177,7 +206,11 @@ public class EEG_UDP_GUI extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				
-				if (eeg == null) {
+				if (eeg == null || userName.equals(userNameInput.getText()) || password.equals(new String(passwordInput.getPassword()))) {
+					
+					userName = userNameInput.getText();
+					password = new String(passwordInput.getPassword());
+					
 					if (!skipLoginCheckBox.isSelected()) {
 						EmotivLicenseActivator ela = new EmotivLicenseActivator(userNameInput.getText(), new String(passwordInput.getPassword()));
 						messagesTextArea.append(ela.login() + "\n");
@@ -191,15 +224,23 @@ public class EEG_UDP_GUI extends JFrame {
 					
 					try {
 						eeg = new SendEEGOverUDP("localhost", 9092);
-					} catch (UnknownHostException err) {
+						eeg.start(txthz);
+					} catch (UnknownHostException | SocketException err) {
 						err.printStackTrace();
+						return;
 					}
-				}
-				
-				try {
-					eeg.start();
-				} catch (SocketException err) {
-					err.printStackTrace();
+					
+					if (saveLoginCheckBox.isSelected()) {
+						try {
+							byte data[] = (userName + "\n" + password + "\n").getBytes();
+							for (int i = 0; i < data.length; i++)
+								data[i] += 128;
+							Path file = Paths.get("EmotivLogin");
+							Files.write(file, data);
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					}
 				}
 				
 				messagesTextArea.append("\nUDP packets are now being sent to: " + ipAddressInput.getText() + " : " + portInput.getValue() + "\n");
@@ -216,6 +257,23 @@ public class EEG_UDP_GUI extends JFrame {
 			}
 		});
 		southPanel.add(btnStop);
+		
+		try {
+			if (new File("EmotivLogin").exists()) {
+				byte[] data = Files.readAllBytes(Paths.get("EmotivLogin"));
+				for (int i = 0; i < data.length; i++)
+					data[i] -= 128;
+				
+				String in = new String(data);
+				userName = in.substring(0, in.indexOf("\n")).trim();
+				password = in.substring(in.indexOf("\n")).trim();
+				
+				userNameInput.setText(userName);
+				passwordInput.setText(password);
+				saveLoginCheckBox.setSelected(true);
+			}
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
 	}
-
 }
