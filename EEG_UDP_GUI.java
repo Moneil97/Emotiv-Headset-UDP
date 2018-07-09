@@ -3,32 +3,29 @@ package oneil;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-import javax.swing.JTextField;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.JLabel;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import javax.swing.JPasswordField;
-import javax.swing.JCheckBox;
-import javax.swing.JMenuBar;
-import java.awt.Font;
-import javax.swing.JSpinner;
 import javax.swing.JButton;
-import javax.swing.JTextArea;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuBar;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.border.EmptyBorder;
 
 public class EEG_UDP_GUI extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -39,7 +36,8 @@ public class EEG_UDP_GUI extends JFrame {
 	private SendEEGOverUDP eeg;
 	private JTextField txthz;
 	
-	private String userName, password;
+	private String userName, password, ip;
+	private int port;
 
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
@@ -206,10 +204,13 @@ public class EEG_UDP_GUI extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				
-				if (eeg == null || userName.equals(userNameInput.getText()) || password.equals(new String(passwordInput.getPassword()))) {
+				if (eeg == null || !userName.equals(userNameInput.getText()) || !password.equals(new String(passwordInput.getPassword()))
+						        || !ip.equals(ipAddressInput.getText()) || port != (int)portInput.getValue()) {
 					
 					userName = userNameInput.getText();
 					password = new String(passwordInput.getPassword());
+					ip = ipAddressInput.getText();
+					port = (int)portInput.getValue();
 					
 					if (!skipLoginCheckBox.isSelected()) {
 						EmotivLicenseActivator ela = new EmotivLicenseActivator(userNameInput.getText(), new String(passwordInput.getPassword()));
@@ -223,9 +224,11 @@ public class EEG_UDP_GUI extends JFrame {
 					}
 					
 					try {
-						eeg = new SendEEGOverUDP("localhost", 9092);
+						eeg = new SendEEGOverUDP(ip, port);
 						eeg.start(txthz);
-					} catch (UnknownHostException | SocketException err) {
+						Files.write(Paths.get("port"), Integer.toString(port).getBytes());
+
+					} catch (IOException err) {
 						err.printStackTrace();
 						return;
 					}
