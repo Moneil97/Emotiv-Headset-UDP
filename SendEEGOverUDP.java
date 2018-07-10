@@ -10,21 +10,29 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.JTextField;
+
 public class SendEEGOverUDP {
 	
-	private EmotivController ec;
+	private EmotivController2 ec;
 	private DatagramSocket clientSocket;
 	private Thread t;
 	private InetAddress ip;
 	private int port;
 
 	public SendEEGOverUDP(String ip, int port) throws UnknownHostException {
-		ec = new EmotivController();
+		ec = new EmotivController2() {
+			@Override
+			public void stateUpdated(int wireless, int battery, int[] contactQuality) {
+				System.out.println(Arrays.toString(contactQuality));
+			}
+		};
+		ec.startStateHandler();
 		this.ip = InetAddress.getByName(ip);
 		this.port = port;
 	}
 	
-	public void start() throws SocketException {
+	public void start(JTextField sampleRateText) throws SocketException {
 		
 		clientSocket = new DatagramSocket();
 		t = new Thread(new Runnable() {
@@ -33,6 +41,9 @@ public class SendEEGOverUDP {
 			public void run() {
 				
 				boolean ignoreFirstSamples = true; //Used to clear out buffer of old samples if stopped then continued
+				long startTime = System.nanoTime();
+				long totalSamples = 0;
+				int counter = 0;
 				
 				while (true) {
 					
@@ -42,10 +53,17 @@ public class SendEEGOverUDP {
 						
 						if (ignoreFirstSamples) {
 							ignoreFirstSamples = false;
+							startTime = System.nanoTime();
 							continue;
 						}
 						
-						System.out.println(samples.size() + " samples");
+						//System.out.println(samples.size() + " samples");
+						totalSamples+=samples.size();
+						if (counter++ >= 10) {
+							if (sampleRateText != null)
+								sampleRateText.setText(Double.toString(totalSamples / ((System.nanoTime() - startTime)/1000000000.0)).substring(0, 6) + " Hz");
+							counter = 0;
+						}
 						for (int s = 0; s < samples.size();  s++) {
 							
 							double[] sample = samples.get(s);
@@ -86,8 +104,13 @@ public class SendEEGOverUDP {
 		t.start();
 	}
 	
-	public void stop() {
+	public void pause() {
 		t.interrupt();
+	}
+	
+	public void stop() {
+		pause();
+		ec.disconnect();
 	}
 	
 	private static byte[] toByteArray(double value) {
@@ -98,9 +121,11 @@ public class SendEEGOverUDP {
 
 	public static void main(String[] args) {
 		try {
-			new SendEEGOverUDP("localhost", 9092).start();
+			new SendEEGOverUDP("localhost", 9092).start(null);
 		} catch (SocketException | UnknownHostException e) {
 			e.printStackTrace();
 		}
 	}
+
+	
 }
