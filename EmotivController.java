@@ -108,13 +108,20 @@ public class EmotivController {
 		Edk.INSTANCE.IEE_SetHeadsetSettings(24576, EPOC_MODE.val, EEG_RATE.val, EEG_RES.val, MEMS_RATE.val, MEMS_RES.val);
 	}
 	
+	public void disconnect() {
+		Edk.INSTANCE.IEE_EngineDisconnect();
+		Edk.INSTANCE.IEE_EmoStateFree(eState);
+		Edk.INSTANCE.IEE_EmoEngineEventFree(eEvent);
+	}
+	
 	public static void main(String[] args) {
+		System.loadLibrary("edk");
 		EmotivController ec = new EmotivController();
 		
 		//int last = 0;
 		
-		while (true) {
-		//for (int a = 0; a < 2; a++) {
+		//while (true) {
+		for (int a = 0; a < 10000; a++) {
 			List<double[]> samples = ec.getAvailableSamples();
 			if (samples != null) {
 				for (int i = 0; i < samples.size(); i++) {
@@ -131,9 +138,11 @@ public class EmotivController {
 			}
 		}
 		
-		//ec.printHeadsetSettings();
-		//ec.changeSettings(Settings.EPOC_PLUS, Settings.EEG_128Hz, Settings.EEG_16Bit, Settings.MEMS_128Hz, Settings.MEMS_16Bit);
-		//ec.printHeadsetSettings();
+		ec.printHeadsetSettings();
+		ec.changeSettings(Settings.EPOC_PLUS, Settings.EEG_256Hz, Settings.EEG_16Bit, Settings.MEMS_64Hz, Settings.MEMS_16Bit);
+		ec.printHeadsetSettings();
+		
+		ec.disconnect();
 	}
 
 }
