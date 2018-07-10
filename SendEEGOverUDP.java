@@ -7,7 +7,6 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JTextField;
@@ -24,13 +23,17 @@ public class SendEEGOverUDP {
 		ec = new EmotivController2() {
 			@Override
 			public void stateUpdated(int wireless, int battery, int[] contactQuality) {
-				System.out.println(Arrays.toString(contactQuality));
+				//System.out.println(Arrays.toString(contactQuality));
+				SendEEGOverUDP.this.stateUpdated(wireless, battery, contactQuality);
 			}
 		};
 		ec.startStateHandler();
 		this.ip = InetAddress.getByName(ip);
 		this.port = port;
 	}
+	
+	//override to get data
+	public void stateUpdated(int wireless, int battery, int[] contactQuality) {}
 	
 	public void start(JTextField sampleRateText) throws SocketException {
 		
