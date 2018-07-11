@@ -1,5 +1,7 @@
 package oneil;
 
+import java.util.HashMap;
+
 //! Set headset setting for EPOC+ headset
 /*!
  *  \param userId       - user ID
@@ -22,15 +24,27 @@ package oneil;
 
 public enum Settings {
 	
-	EPOC(0), EPOC_PLUS(1),
-	EEG_128Hz(0), EEG_256Hz(1),
-	EEG_14Bit(0), EEG_16Bit(1),
-	MEMS_OFF(0), MEMS_32Hz(1), MEMS_64Hz(2), MEMS_128Hz(3),
-	MEMS_12Bit(0), MEMS_14Bit(1), MEMS_16Bit(2);
+	EPOC(0, "Epoc"), EPOC_PLUS(1, "Epoc+"),
+	EEG_128Hz(0, "128Hz"), EEG_256Hz(1, "256Hz"),
+	EEG_14Bit(0, "14bit"), EEG_16Bit(1, "16bit"),
+	MEMS_OFF(0, "0Hz"), MEMS_32Hz(1, "32Hz"), MEMS_64Hz(2, "64Hz"), MEMS_128Hz(3, "128Hz "),//Note the space at the end to avoid conflicts with EEG_Rate
+	MEMS_12Bit(0, "12bit "), MEMS_14Bit(1, "14bit "), MEMS_16Bit(2, "16bit "); //Note the spaces at the end to avoid conflicts with EEG_Res
 	
 	int val;
+	String string;
+	private static HashMap<String, Settings> map = new HashMap<>();
 	
-	Settings(int val) {
+	Settings(int val, String s) {
 		this.val = val;
+		this.string = s;
+	}
+	
+	static {
+		for (Settings s : Settings.values())
+			map.put(s.string, s);
+	}
+	
+	static Settings stringToEnum(String s) {
+		return map.get(s);
 	}
 }

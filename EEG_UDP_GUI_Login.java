@@ -26,6 +26,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 
 public class EEG_UDP_GUI_Login extends JFrame {
@@ -58,6 +59,11 @@ public class EEG_UDP_GUI_Login extends JFrame {
 		setBounds(100, 100, 450, 405);
 		setMinimumSize(new Dimension(420, 300));
 		setLocationRelativeTo(null);
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);

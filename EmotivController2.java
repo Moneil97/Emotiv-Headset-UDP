@@ -12,14 +12,16 @@ import com.sun.jna.ptr.IntByReference;
 
 public class EmotivController2 {
 	
-	Pointer eEvent = Edk.INSTANCE.IEE_EmoEngineEventCreate();
-	Pointer eState = Edk.INSTANCE.IEE_EmoStateCreate();
-	IntByReference nSamplesTaken = new IntByReference(0);
-	IntByReference userID = new IntByReference(0);
-	int state = 0;
-	boolean readytocollect = false;
-	Pointer hData;
-	float secs = 1f;
+	private IntByReference epocModeRef = new IntByReference(0), eegRateRef = new IntByReference(0), eegResRef = new IntByReference(0),
+		       			   memsRateRef = new IntByReference(0), memsResRef = new IntByReference(0);
+	private Pointer eEvent = Edk.INSTANCE.IEE_EmoEngineEventCreate();
+	private Pointer eState = Edk.INSTANCE.IEE_EmoStateCreate();
+	private IntByReference nSamplesTaken = new IntByReference(0);
+	private IntByReference userID = new IntByReference(0);
+	private int state = 0;
+	private boolean readytocollect = false;
+	private Pointer hData;
+	private float secs = 1f;
 	private IntByReference batteryLevel = new IntByReference(0), maxBatteryLevel = new IntByReference(0);
 	private Thread t;
 	
@@ -63,33 +65,58 @@ public class EmotivController2 {
 	}
 	
 	//Prints Headset settings to system.out
-	IntByReference epocModeRef = new IntByReference(0), eegRateRef = new IntByReference(0), eegResRef = new IntByReference(0),
-			       memsRateRef = new IntByReference(0), memsResRef = new IntByReference(0);
-	public void printHeadsetSettings() {
-		if (userID.getValue() == 0) {
-			state = Edk.INSTANCE.IEE_EngineGetNextEvent(eEvent);
-			if (state == EdkErrorCode.EDK_OK.ToInt()) {
-				Edk.INSTANCE.IEE_EmoEngineEventGetUserId(eEvent, userID);
+	
+	public String[] getHeadsetSettings(){
+		if (userID.getValue() == 0) 
+			return null;
+		else {
+			Edk.INSTANCE.IEE_GetHeadsetSettings(userID.getValue(), epocModeRef, eegRateRef, eegResRef, memsRateRef, memsResRef);
+			
+			String[] out = new String[6];
+			
+			out[0] = String.valueOf(userID.getValue());
+			out[1] = epocModeRef.getValue() == 0 ? "EPOC" : "EPOC+";
+			out[2] = eegRateRef.getValue() == 0 ? "128Hz" : "256Hz";
+			out[3] = eegResRef.getValue() == 0 ? "14bit" : "16bit";
+
+			switch(memsRateRef.getValue()) {
+				case 0:
+					out[4] = "0Hz";
+					break;
+				case 1:
+					out[4] = "32Hz";
+					break;
+				case 2:
+					out[4] = "64Hz";
+					break;
+				case 3:
+					out[4] = "128Hz";
+					break;
 			}
+			switch(memsResRef.getValue()) {
+				case 0:
+					out[5] = "12bit";
+					break;
+				case 1:
+					out[5] = "14bit";
+					break;
+				case 2:
+					out[5] = "16bit";
+					break;
+			}
+			return out;
 		}
-		
-		Edk.INSTANCE.IEE_GetHeadsetSettings(userID.getValue(), epocModeRef, eegRateRef, eegResRef, memsRateRef, memsResRef);
-		System.out.println(userID.getValue() + "," + epocModeRef.getValue() + "," + eegRateRef.getValue() + "," + eegResRef.getValue() + "," + memsRateRef.getValue() + "," + memsResRef.getValue());
 	}
 	
 	//Headset must be plugged in via USB
 	public void changeSettings(Settings EPOC_MODE, Settings EEG_RATE, Settings EEG_RES, Settings MEMS_RATE, Settings MEMS_RES) {
-		
-		if (userID.getValue() == 0) {
-			state = Edk.INSTANCE.IEE_EngineGetNextEvent(eEvent);
-			if (state == EdkErrorCode.EDK_OK.ToInt()) {
-				Edk.INSTANCE.IEE_EmoEngineEventGetUserId(eEvent, userID);
-			}
+		if (userID.getValue() == 0)
+			System.err.println("no headset connected");
+		else {
+			System.out.println("new settings: " + userID.getValue() + " , " + EPOC_MODE.val + " , " + EEG_RATE.val + " , " +EEG_RES.val + " , " +MEMS_RATE.val + " , " +MEMS_RES.val);
+			Edk.INSTANCE.IEE_SetHeadsetSettings(userID.getValue(), EPOC_MODE.val, EEG_RATE.val, EEG_RES.val, MEMS_RATE.val, MEMS_RES.val);
 		}
-		
-		Edk.INSTANCE.IEE_SetHeadsetSettings(24576, EPOC_MODE.val, EEG_RATE.val, EEG_RES.val, MEMS_RATE.val, MEMS_RES.val);
 	}
-	
 	
 	public void startStateHandler() {
 		t = new Thread(new Runnable() {
@@ -109,7 +136,12 @@ public class EmotivController2 {
 								System.out.println("User " + userID.getValue() + " added");
 								IEegData.INSTANCE.IEE_DataAcquisitionEnable(userID.getValue(), true);
 								readytocollect = true;
+								userAdded(userID.getValue());
 							}
+						}
+						else if (eventType == Edk.IEE_Event_t.IEE_UserRemoved.ToInt()) {
+							//System.out.println("User " + userID.getValue() + " removed");
+							//userID = null;
 						}
 						else if (eventType == Edk.IEE_Event_t.IEE_EmoStateUpdated.ToInt()) {
 							Edk.INSTANCE.IEE_EmoEngineEventGetEmoState(eEvent, eState);
@@ -144,9 +176,14 @@ public class EmotivController2 {
 	
 	//override this method to get new state info when it is available
 	public void stateUpdated(int wireless, int battery, int[] contactQuality) {}
+	public void userAdded(int userID) {}
 	
 	public double getBattery() {
 		return ((double)batteryLevel.getValue())/maxBatteryLevel.getValue();
+	}
+	
+	public void stopHandlerThread() {
+		t.interrupt();
 	}
 	
 	public void disconnect() {
