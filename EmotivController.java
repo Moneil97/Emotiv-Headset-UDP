@@ -83,16 +83,45 @@ public class EmotivController {
 	//Prints Headset settings to system.out
 	IntByReference epocModeRef = new IntByReference(0), eegRateRef = new IntByReference(0), eegResRef = new IntByReference(0),
 			       memsRateRef = new IntByReference(0), memsResRef = new IntByReference(0);
-	public void printHeadsetSettings() {
-		if (userID.getValue() == 0) {
-			state = Edk.INSTANCE.IEE_EngineGetNextEvent(eEvent);
-			if (state == EdkErrorCode.EDK_OK.ToInt()) {
-				Edk.INSTANCE.IEE_EmoEngineEventGetUserId(eEvent, userID);
+	public String getHeadsetSettings(){
+		if (userID.getValue() == 0) 
+			return "no headset connected";
+		else {
+			Edk.INSTANCE.IEE_GetHeadsetSettings(userID.getValue(), epocModeRef, eegRateRef, eegResRef, memsRateRef, memsResRef);
+			
+			String out = "ID: " + userID.getValue() + ",";
+			out += "\nMode: " + (epocModeRef.getValue() == 0 ? "EPOC" : "EPOC+");
+			out += "\nEEG Rate: " + (eegRateRef.getValue() == 0 ? "128Hz" : "265Hz");
+			out += "\nEEG Res: " + (eegResRef.getValue() == 0 ? "14bit" : "16bit");
+			out += "\nMEMS Rate: ";
+			switch(memsRateRef.getValue()) {
+				case 0:
+					out+= "OFF";
+					break;
+				case 1:
+					out+="32Hz";
+					break;
+				case 2:
+					out+="64Hz";
+					break;
+				case 3:
+					out+="128Hz";
+					break;
 			}
+			out += "\nMEMS Res: ";
+			switch(memsResRef.getValue()) {
+				case 0:
+					out+= "12bit";
+					break;
+				case 1:
+					out+="14bit";
+					break;
+				case 2:
+					out+="16bit";
+					break;
+			}
+			return out;
 		}
-		
-		Edk.INSTANCE.IEE_GetHeadsetSettings(userID.getValue(), epocModeRef, eegRateRef, eegResRef, memsRateRef, memsResRef);
-		System.out.println(userID.getValue() + "," + epocModeRef.getValue() + "," + eegRateRef.getValue() + "," + eegResRef.getValue() + "," + memsRateRef.getValue() + "," + memsResRef.getValue());
 	}
 	
 	//Headset must be plugged in via USB
@@ -138,9 +167,9 @@ public class EmotivController {
 			}
 		}
 		
-		ec.printHeadsetSettings();
+		System.out.println(ec.getHeadsetSettings());
 		ec.changeSettings(Settings.EPOC_PLUS, Settings.EEG_256Hz, Settings.EEG_16Bit, Settings.MEMS_64Hz, Settings.MEMS_16Bit);
-		ec.printHeadsetSettings();
+		System.out.println(ec.getHeadsetSettings());
 		
 		ec.disconnect();
 	}
