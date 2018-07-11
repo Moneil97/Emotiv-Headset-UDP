@@ -141,6 +141,10 @@ public class EmotivLicenseActivator {
             return "Unknown Error";
         }
 	}
+	
+	public void disconnect() {
+		Edk.INSTANCE.IEE_EngineDisconnect();
+	}
 
 	public static void main(String[] args) {
 		EmotivLicenseActivator ela = new EmotivLicenseActivator("", "");
