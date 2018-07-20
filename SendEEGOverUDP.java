@@ -14,14 +14,14 @@ import javax.swing.JTextField;
 
 public class SendEEGOverUDP {
 	
-	private EmotivController2 ec;
+	private EmotivController3 ec;
 	private DatagramSocket clientSocket;
 	private Thread t;
 	private InetAddress ip;
 	private int port;
 
 	public SendEEGOverUDP(String ip, int port) throws UnknownHostException {
-		ec = new EmotivController2() {
+		ec = new EmotivController3() {
 			@Override
 			public void stateUpdated(int wireless, int battery, int[] contactQuality) {
 				//System.out.println(wireless + " " + battery + " " + Arrays.toString(contactQuality));
@@ -36,7 +36,7 @@ public class SendEEGOverUDP {
 	//override to get data
 	public void stateUpdated(int wireless, int battery, int[] contactQuality) {}
 	
-	public void start(JTextField sampleRateText) throws SocketException {
+	public void start(final JTextField sampleRateText) throws SocketException {
 		
 		clientSocket = new DatagramSocket();
 		t = new Thread(new Runnable() {
@@ -51,7 +51,7 @@ public class SendEEGOverUDP {
 				
 				while (true) {
 					
-					List<double[]> samples = ec.getAvailableSamples();
+					List<double[]> samples = ec.getAvailableSamples(true);
 					
 					if (samples != null) {
 						

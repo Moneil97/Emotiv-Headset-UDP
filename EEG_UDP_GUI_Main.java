@@ -85,7 +85,7 @@ public class EEG_UDP_GUI_Main extends JFrame {
 		panel_1.add(centerPanel, BorderLayout.CENTER);
 		centerPanel.setLayout(new BorderLayout(0, 0));
 		
-		JTextArea messagesTextArea = new JTextArea();
+		final JTextArea messagesTextArea = new JTextArea();
 		messagesTextArea.setEditable(false);
 		//centerPanel.add(messagesTextArea);
 		
@@ -141,7 +141,7 @@ public class EEG_UDP_GUI_Main extends JFrame {
 		JLabel lblPort = new JLabel("Port #:   ");
 		panel_7.add(lblPort, BorderLayout.WEST);
 		
-		JSpinner portInput = new JSpinner();
+		final JSpinner portInput = new JSpinner();
 		portInput.setModel(new SpinnerNumberModel(9092, 1024, 65534, 1));
 		portInput.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		portInput.setValue(9092);

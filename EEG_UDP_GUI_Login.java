@@ -76,7 +76,7 @@ public class EEG_UDP_GUI_Login extends JFrame {
 		contentPane.add(centerPanel, BorderLayout.CENTER);
 		centerPanel.setLayout(new BorderLayout(0, 0));
 		
-		JTextArea messagesTextArea = new JTextArea();
+		final JTextArea messagesTextArea = new JTextArea();
 		messagesTextArea.setEditable(false);
 		
 		JScrollPane scrollPane = new JScrollPane();
@@ -122,7 +122,7 @@ public class EEG_UDP_GUI_Login extends JFrame {
 		passwordInput.setFont(new Font("Tahoma", Font.PLAIN, 14));
 		panel_3.add(passwordInput, BorderLayout.CENTER);
 		
-		JCheckBox hideCheckBox = new JCheckBox("Hide");
+		final JCheckBox hideCheckBox = new JCheckBox("Hide");
 		hideCheckBox.setToolTipText("Hide your password input");
 		hideCheckBox.setSelected(true);
 		hideCheckBox.addActionListener(new ActionListener() {
@@ -142,7 +142,7 @@ public class EEG_UDP_GUI_Login extends JFrame {
 		JLabel lblSessionsToAdd = new JLabel("Sessions to add:");
 		panel_4.add(lblSessionsToAdd);
 		
-		JSpinner spinnerSessions = new JSpinner();
+		final JSpinner spinnerSessions = new JSpinner();
 		spinnerSessions.setPreferredSize(new Dimension(50, 20));
 		spinnerSessions.setModel(new SpinnerNumberModel(1, 1, null, 1));
 		panel_4.add(spinnerSessions);
@@ -165,7 +165,7 @@ public class EEG_UDP_GUI_Login extends JFrame {
 		southPanel.setLayout(new GridLayout(0, 2, 0, 0));
 		
 		
-		JButton btnLogIn = new JButton("Log In");
+		final JButton btnLogIn = new JButton("Log In");
 		btnLogIn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
