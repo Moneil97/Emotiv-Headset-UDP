@@ -49,10 +49,12 @@ public class EmotivController3 {
 			if (nSamplesTaken != null && nSamplesTaken.getValue() != 0) {
 	
 				double[] data = new double[nSamplesTaken.getValue()];
-				for (int sampleIdx = 0; sampleIdx < nSamplesTaken.getValue(); ++sampleIdx) 
-					samples.add(new double[18]);
+				
 				
 				if (skipSample1and2) {
+					for (int sampleIdx = 0; sampleIdx < nSamplesTaken.getValue(); ++sampleIdx) 
+						samples.add(new double[18]);
+					
 					IEegData.INSTANCE.IEE_DataGet(hData, 0, data, nSamplesTaken.getValue());
 					for (int sampleIdx = 0; sampleIdx < nSamplesTaken.getValue(); ++sampleIdx) 
 						samples.get(sampleIdx)[0] = data[sampleIdx];
@@ -64,6 +66,9 @@ public class EmotivController3 {
 					}
 				}
 				else {
+					for (int sampleIdx = 0; sampleIdx < nSamplesTaken.getValue(); ++sampleIdx) 
+						samples.add(new double[20]);
+					
 					for (int i = 0; i < 20; i++) {
 						IEegData.INSTANCE.IEE_DataGet(hData, i, data, nSamplesTaken.getValue());
 						for (int sampleIdx = 0; sampleIdx < nSamplesTaken.getValue(); ++sampleIdx) 
