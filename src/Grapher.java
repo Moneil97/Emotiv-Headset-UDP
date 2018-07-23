@@ -17,6 +17,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 public class Grapher extends JFrame{
 
@@ -31,6 +33,7 @@ public class Grapher extends JFrame{
 	private final int channels = 20;
 	private final boolean defaultToggle = false;
 	
+	String channelNames[] = {"COUNTER", "INTERPOLATED", "RAW_CQ", "AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4","GYRO-X", "GYRO-Y", "TIMESTAMP"};
 	Color[] colors = {Color.black, Color.red, Color.blue, Color.orange, Color.cyan, Color.green, Color.magenta, Color.pink};
 	private EmotivController3 ec;
 	
@@ -51,20 +54,27 @@ public class Grapher extends JFrame{
 		
 		for (i=0; i < channels; i++) {
 			bools[i] = defaultToggle;
-			buttons[i] = new JToggleButton("" + i, defaultToggle);
-			buttons[i].addActionListener(new ActionListener() {
-				
+			buttons[i] = new JToggleButton(i + " " + channelNames[i], defaultToggle);
+			buttons[i].addChangeListener(new ChangeListener() {
 				int num = i;
-				
 				@Override
-				public void actionPerformed(ActionEvent e) {
-					System.out.println(num);
+				public void stateChanged(ChangeEvent e) {
 					bools[num] = !bools[num];
 				}
 			});
 			buttonPanel.add(buttons[i]);
 		}
 		
+		JToggleButton toggleAll = new JToggleButton("ALL", defaultToggle);
+		toggleAll.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				for (JToggleButton b : buttons) {
+					b.setSelected(toggleAll.isSelected());
+				}
+			}
+		});
+		buttonPanel.add(toggleAll);
 
 		content.add(paneHolder,  BorderLayout.CENTER);
 		content.add(buttonPanel,  BorderLayout.SOUTH);
