@@ -34,7 +34,7 @@ public class Grapher extends JFrame{
 	private final boolean defaultToggle = false;
 	
 	String channelNames[] = {"COUNTER", "INTERPOLATED", "RAW_CQ", "AF3", "F7", "F3", "FC5", "T7", "P7", "O1", "O2", "P8", "T8", "FC6", "F4", "F8", "AF4","GYRO-X", "GYRO-Y", "TIMESTAMP"};
-	Color[] colors = {Color.black, Color.red, Color.blue, Color.orange, Color.cyan, Color.green, Color.magenta, Color.pink};
+	Color[] colors = {Color.white, Color.red, Color.blue, Color.orange, Color.cyan, Color.green, Color.magenta, Color.pink};
 	private EmotivController3 ec;
 	
 	public Grapher() {
@@ -55,6 +55,9 @@ public class Grapher extends JFrame{
 		for (i=0; i < channels; i++) {
 			bools[i] = defaultToggle;
 			buttons[i] = new JToggleButton(i + " " + channelNames[i], defaultToggle);
+			buttons[i].setForeground(colors[i%colors.length]);
+			//buttons[i].setBackground(colors[i%colors.length] == Color.black? Color.white:Color.black);
+			buttons[i].setBackground(Color.black);
 			buttons[i].addChangeListener(new ChangeListener() {
 				int num = i;
 				@Override
@@ -79,7 +82,7 @@ public class Grapher extends JFrame{
 		content.add(paneHolder,  BorderLayout.CENTER);
 		content.add(buttonPanel,  BorderLayout.SOUTH);
 		
-		this.setBackground(Color.white);
+		this.setBackground(Color.black);
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		this.pack();
 		this.setLocationRelativeTo(null);
@@ -98,7 +101,7 @@ public class Grapher extends JFrame{
 		private static final long serialVersionUID = 1L;
 
 		public Pane(){
-			this.setBackground(Color.white);
+			this.setBackground(Color.black);
 			this.setPreferredSize(new Dimension(1850, height+5)); //62 pixels each for 16 channels
 		}
 
